@@ -131,6 +131,8 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 		panic(err.Error())
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+
 	_, err = w.Write(serialized)
 	if err != nil {
 		panic(err.Error())
