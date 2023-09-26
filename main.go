@@ -20,6 +20,12 @@ type UpdatePostRequest struct {
 	Content string `json:"content"`
 }
 
+type GetPostResponse struct {
+	Id      string `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
 func getConnection() *sql.DB {
 	config := mysql.Config{
 		User:   "root",
@@ -99,8 +105,43 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 }
 
+func GetById(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	db := getConnection()
+
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	rows := db.QueryRow("SELECT id, title, content FROM post WHERE id = ?", id)
+
+	response := GetPostResponse{}
+	if err := rows.Scan(&response.Id, &response.Title, &response.Content); err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println(response)
+
+	serialized, err := json.Marshal(response)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = w.Write(serialized)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
+
 func main() {
 	http.HandleFunc("/create", CreatePost)
+	http.HandleFunc("/read", GetById)
 	http.HandleFunc("/update", UpdatePost)
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
