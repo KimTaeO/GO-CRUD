@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
+	"log"
 	"net/http"
 )
 
@@ -30,10 +32,37 @@ func getConnection() *sql.DB {
 	return db
 }
 
+func CreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+	}
+
+	db := getConnection()
+
+	fmt.Println(r)
+
+	requestDto := CreatePostRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	q, err := db.Prepare("INSERT INTO post (title, content) VALUES (?, ?)")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = q.Exec(requestDto.Title, requestDto.Content)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
+
 func main() {
+	http.HandleFunc("/post/create", CreatePost)
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		log.Fatalln(err.Error())
 	}
 }
