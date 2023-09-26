@@ -139,10 +139,32 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 }
 
+func deletePostById(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	db := getConnection()
+
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	q, err := db.Prepare("DELETE FROM post WHERE id = ?")
+
+	if _, err := q.Exec(id); err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
+
 func main() {
 	http.HandleFunc("/create", CreatePost)
 	http.HandleFunc("/read", GetById)
 	http.HandleFunc("/update", UpdatePost)
+	http.HandleFunc("/delete", deletePostById)
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
 		log.Fatalln(err.Error())
