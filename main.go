@@ -7,9 +7,15 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type CreatePostRequest struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
+type UpdatePostRequest struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
@@ -34,7 +40,7 @@ func getConnection() *sql.DB {
 
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Bad Request", http.StatusBadRequest)
+		http.Error(w, "Forbidden", http.StatusForbidden)
 	}
 
 	db := getConnection()
@@ -59,8 +65,43 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 }
 
+func UpdatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}
+
+	db := getConnection()
+
+	fmt.Println(r)
+
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println(id)
+
+	requestDto := UpdatePostRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	q, err := db.Prepare("UPDATE post SET title = ?, content = ? WHERE id = ?")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = q.Exec(requestDto.Title, requestDto.Content, id)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
+
 func main() {
-	http.HandleFunc("/post/create", CreatePost)
+	http.HandleFunc("/create", CreatePost)
+	http.HandleFunc("/update", UpdatePost)
 	err := http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
 		log.Fatalln(err.Error())
