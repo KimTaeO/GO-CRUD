@@ -2,9 +2,9 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/KimTaeO/GO-CRUD/config"
+	"github.com/KimTaeO/GO-CRUD/post/entity"
 	presentation "github.com/KimTaeO/GO-CRUD/post/presentation/dto/request"
+	"github.com/KimTaeO/GO-CRUD/post/repository"
 	"net/http"
 	"strconv"
 )
@@ -14,29 +14,20 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}
 
-	db := config.GetConnection()
-
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		panic(err.Error())
 	}
-
-	fmt.Println(id)
 
 	requestDto := presentation.UpdatePostRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	q, err := db.Prepare("UPDATE post SET title = ?, content = ? WHERE id = ?")
-	if err != nil {
-		panic(err.Error())
+	post := entity.Post{
+		Title:   requestDto.Title,
+		Content: requestDto.Content,
 	}
 
-	_, err = q.Exec(requestDto.Title, requestDto.Content, id)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer db.Close()
+	repository.UpdateById(id, post)
 }

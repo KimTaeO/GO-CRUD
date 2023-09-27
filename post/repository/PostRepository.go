@@ -47,3 +47,19 @@ func GetById(id int) (entity.Post, error) {
 	defer db.Close()
 	return post, err
 }
+
+func UpdateById(id int, post entity.Post) {
+	db := config.GetConnection()
+
+	q, err := db.Prepare("UPDATE post SET title = ?, content = ? WHERE id = ?")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	_, err = q.Exec(post.Title, post.Content, id)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
