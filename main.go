@@ -4,27 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	presentation "github.com/KimTaeO/GO-CRUD/post/presentation/dto/request"
+	presentation2 "github.com/KimTaeO/GO-CRUD/post/presentation/dto/response"
 	"github.com/go-sql-driver/mysql"
 	"log"
 	"net/http"
 	"strconv"
 )
-
-type CreatePostRequest struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
-
-type UpdatePostRequest struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
-
-type GetPostResponse struct {
-	Id      string `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
-}
 
 func getConnection() *sql.DB {
 	config := mysql.Config{
@@ -51,9 +37,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 
 	db := getConnection()
 
-	fmt.Println(r)
-
-	requestDto := CreatePostRequest{}
+	requestDto := presentation.CreatePostRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -78,8 +62,6 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	db := getConnection()
 
-	fmt.Println(r)
-
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		panic(err.Error())
@@ -87,7 +69,7 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(id)
 
-	requestDto := UpdatePostRequest{}
+	requestDto := presentation.UpdatePostRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
@@ -119,12 +101,11 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 
 	rows := db.QueryRow("SELECT id, title, content FROM post WHERE id = ?", id)
 
-	response := GetPostResponse{}
+	response := presentation2.GetPostResponse{}
 	if err := rows.Scan(&response.Id, &response.Title, &response.Content); err != nil {
-		panic(err.Error())
+		http.Error(w, "post not found", http.StatusNotFound)
+		return
 	}
-
-	fmt.Println(response)
 
 	serialized, err := json.Marshal(response)
 	if err != nil {
