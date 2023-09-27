@@ -20,3 +20,18 @@ func Save(post entity.Post) {
 
 	defer db.Close()
 }
+
+func DeleteById(id int) {
+	db := config.GetConnection()
+
+	q, err := db.Prepare("DELETE FROM post WHERE id = ?")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if _, err := q.Exec(id); err != nil {
+		panic(err.Error())
+	}
+
+	defer db.Close()
+}
