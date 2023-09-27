@@ -1,4 +1,4 @@
-package presentation
+package dto
 
 type CreatePostRequest struct {
 	Title   string `json:"title"`

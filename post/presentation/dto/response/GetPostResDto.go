@@ -1,4 +1,4 @@
-package presentation
+package dto
 
 type GetPostResponse struct {
 	Id      string `json:"id"`
