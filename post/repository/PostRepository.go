@@ -35,3 +35,15 @@ func DeleteById(id int) {
 
 	defer db.Close()
 }
+
+func GetById(id int) (entity.Post, error) {
+	db := config.GetConnection()
+
+	post := entity.Post{}
+
+	rows := db.QueryRow("SELECT id, title, content FROM post WHERE id = ?", id)
+	err := rows.Scan(&post.Id, &post.Title, &post.Content)
+
+	defer db.Close()
+	return post, err
+}

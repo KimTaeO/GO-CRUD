@@ -2,8 +2,8 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/KimTaeO/GO-CRUD/config"
-	presentation2 "github.com/KimTaeO/GO-CRUD/post/presentation/dto/response"
+	dto "github.com/KimTaeO/GO-CRUD/post/presentation/dto/response"
+	"github.com/KimTaeO/GO-CRUD/post/repository"
 	"net/http"
 	"strconv"
 )
@@ -13,19 +13,20 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}
 
-	db := config.GetConnection()
-
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil {
 		panic(err.Error())
 	}
 
-	rows := db.QueryRow("SELECT id, title, content FROM post WHERE id = ?", id)
-
-	response := presentation2.GetPostResponse{}
-	if err := rows.Scan(&response.Id, &response.Title, &response.Content); err != nil {
+	post, err := repository.GetById(id)
+	if err != nil {
 		http.Error(w, "post not found", http.StatusNotFound)
-		return
+	}
+
+	response := dto.GetPostResponse{
+		Id:      post.Id,
+		Title:   post.Title,
+		Content: post.Content,
 	}
 
 	serialized, err := json.Marshal(response)
@@ -39,6 +40,4 @@ func GetById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	defer db.Close()
 }

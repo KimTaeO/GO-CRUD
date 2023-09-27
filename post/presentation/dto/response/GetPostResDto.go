@@ -1,7 +1,7 @@
 package dto
 
 type GetPostResponse struct {
-	Id      string `json:"id"`
+	Id      int    `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
