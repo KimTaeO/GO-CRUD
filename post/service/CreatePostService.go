@@ -2,8 +2,9 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/KimTaeO/GO-CRUD/config"
+	"github.com/KimTaeO/GO-CRUD/post/entity"
 	presentation "github.com/KimTaeO/GO-CRUD/post/presentation/dto/request"
+	"github.com/KimTaeO/GO-CRUD/post/repository"
 	"net/http"
 )
 
@@ -12,22 +13,16 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}
 
-	db := config.GetConnection()
-
 	requestDto := presentation.CreatePostRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&requestDto); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	q, err := db.Prepare("INSERT INTO post (title, content) VALUES (?, ?)")
-	if err != nil {
-		panic(err.Error())
+	post := entity.Post{
+		Title:   requestDto.Title,
+		Content: requestDto.Content,
 	}
 
-	_, err = q.Exec(requestDto.Title, requestDto.Content)
-	if err != nil {
-		panic(err.Error())
-	}
+	repository.Save(post)
 
-	defer db.Close()
 }
